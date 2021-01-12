@@ -286,6 +286,18 @@ public class RobotContainer {
     drive.resetOdometry( exampleTrajectory.getInitialPose() );
 
     // Run path following command, then stop at the end.
-    return ramseteCommand.andThen( () -> drive.tankDriveVolts( 0, 0 ) );
+    //return ramseteCommand.andThen( () -> drive.tankDriveVolts( 0, 0 ) );
+
+    return new TrajectoryCommand( 
+      new Pose2d( 0, 0, new Rotation2d( reverseAuto ? 180 : 0 ) ), 
+      List.of(
+        new Translation2d( 1, 1 ),
+        new Translation2d( 2, -1 )
+      ), 
+      new Pose2d( 3, 0, new Rotation2d( reverseAuto ? 180 : 0 ) ), 
+      reverseAuto, 
+      drive
+    ).get();
+    
   }
 }
