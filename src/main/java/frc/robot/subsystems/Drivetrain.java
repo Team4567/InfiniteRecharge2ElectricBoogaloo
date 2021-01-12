@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -88,6 +90,16 @@ public class Drivetrain extends SubsystemBase {
     // Update the odometry in the periodic block
     //m_odometry.update(m_gyro.getRotation2d(), m_leftEncoder.getDistance(),
     //                  m_rightEncoder.getDistance());
+    SmartDashboard.putData( "Drivetrain", m_drive );
+    SmartDashboard.putData( "Gyro", m_gyro );
+    SmartDashboard.putNumber( "Left Encoder", leftMaster.getSelectedSensorPosition() );
+    SmartDashboard.putNumber( "Right Encoder", rightMaster.getSelectedSensorPosition() );
+    SmartDashboard.putNumber( "Left Velocity", leftMaster.getSelectedSensorVelocity() * 10 );
+    SmartDashboard.putNumber( "Right Velocity", rightMaster.getSelectedSensorVelocity() * 10 );
+
+    if( gear != prevGear ){
+      
+    }
   }
 
   /**
@@ -148,8 +160,8 @@ public class Drivetrain extends SubsystemBase {
    * Resets the drive encoders to currently read a position of 0.
    */
   public void resetEncoders() {
-    //m_leftEncoder.reset();
-    //m_rightEncoder.reset();
+    leftMaster.setSelectedSensorPosition( 0 );
+    rightMaster.setSelectedSensorPosition( 0 );
   }
 
   /**

@@ -15,8 +15,10 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * project.
  */
 public class Robot extends TimedRobot {
+  // Autonomous command to be called in AutonInit
   private Command m_autonomousCommand;
 
+  // Contains all robot aspects
   private RobotContainer m_robotContainer;
 
   /**
@@ -56,9 +58,10 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    // Grabs the command from the chooser/robot container
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
+    // schedule the autonomous command, assuming it is not null (Non-Existent)
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
@@ -79,10 +82,13 @@ public class Robot extends TimedRobot {
     }
   }
 
-  /** This function is called periodically during operator control. */
+  /** This function is called periodically during operator control.
+   * All teleop controls are the default commands of the subsystems, so there is nothing to put here.
+   */
   @Override
   public void teleopPeriodic() {}
 
+  // Test will not let motors spin, but will take in encoder/sensor values.
   @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.

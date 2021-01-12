@@ -23,27 +23,35 @@ import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 public final class Constants {
     /**
      * CAN/PWM Values for everything
+	 * Each gearbox has 2 motors. One is the master that does calculations, and the slave that follows whatever the master does
      */
-    public static final int kCANLMaster = 3;
-    public static final int kCANLSlave = 0;
-    public static final int kCANRMaster = 2;
+	// CAN ID of Left Master
+	public static final int kCANLMaster = 3;
+	// CAN ID of Left Slave
+	public static final int kCANLSlave = 0;
+	// CAN ID of Right Master
+	public static final int kCANRMaster = 2;
+	// CAN ID of Right Slave
     public static final int kCANRSlave = 1;
 
+	// CAN ID of Intake Motor
 	public static final int kCANIntake = 0;
+	// CAN ID of Flip Motor
 	public static final int kCANFlip = 15;
 
-	public static final int kCANClimb = 1;
-
-	public static final int kCANVictorControl = -1; 
-	public static final int kPCMControlIn = 4;
-	public static final int kPCMControlOut = 5;
-
+	// CAN ID of IMU (Gyro)
 	public static final int kCANIMU = 5;
 	
+	// CAN ID of Pneumatics Control Module A (Called A in case we have a 2nd)
 	public static final int kCANPCMA = 10;
 	
+	// PCM Port Numbers for the Left Gearbox Shifter
+	// This acts as a normal piston, but instead of being a long shaft it pushes the gears into different alignments for different ratios
 	public static final int kPCMLGearboxIn = 0;
 	public static final int kPCMLGearboxOut = 1;
+
+	// PCM Port Numbers for the Left Gearbox Shifter
+	// This acts as a normal piston, but instead of being a long shaft it pushes the gears into different alignments for different ratios
 	public static final int kPCMRGearboxIn = 2;
 	public static final int kPCMRGearboxOut = 3;
 	
@@ -52,24 +60,24 @@ public final class Constants {
 	 */
 	public final static int kPigeonUnitsPerRotation = 8192;
 
-
-
-
-
+    // Tuned Values from the FRC Characterization Sheet
 	public static final double ksVolts = 0.22;
     public static final double kvVoltSecondsPerMeter = 1.98;
     public static final double kaVoltSecondsSquaredPerMeter = 0.2;
-
-    // Example value only - as above, this must be tuned for your drive!
 	public static final double kPDriveVel = 8.5;
+	public static final double kDDriveVel = 8.5;
 	public static final double kTrackwidthMeters = 0.69;
+	
+	// Takes the track width and makes a Kinematics file for the trajectory calculator to understand
     public static final DifferentialDriveKinematics kDriveKinematics =
 		new DifferentialDriveKinematics( kTrackwidthMeters );
 		
+	// Max Speed and Acceleration
 	public static final double kMaxSpeedMetersPerSecond = 3;
 	public static final double kMaxAccelerationMetersPerSecondSquared = 3;
 
 	// Reasonable baseline values for a RAMSETE follower in units of meters and seconds
+	// Ramsete Controller Converts Point Trajectories to Voltage output for the robots motors
 	public static final double kRamseteB = 2;
 	public static final double kRamseteZeta = 0.7;
 }

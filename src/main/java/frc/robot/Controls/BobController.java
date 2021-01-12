@@ -5,11 +5,15 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Controls.DPadButton.Direction;
 
+/**
+ * Modifies the current XboxController class such that it can be used with the Command-Based Structure.
+ * 
+ * Extends the Joystick class to be able to find all of the buttons easily.
+ */
 public class BobController extends Joystick {
 
 	public BobController(int port) {
 		super(port);
-		// TODO Auto-generated constructor stub
 	}
 
 	public JoystickButton xButton = new JoystickButton( this, 3 );
