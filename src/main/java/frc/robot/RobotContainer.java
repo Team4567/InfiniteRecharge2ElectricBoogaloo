@@ -77,6 +77,7 @@ public class RobotContainer {
   double heightLimelight = 0;
   // Center of target
   double heightTarget = 89.75;
+  double ballCenter = 3.5;
 
 
   // Define our controller in USB Port 0 (Port # shown in Driver Station)
@@ -255,14 +256,14 @@ public class RobotContainer {
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
         // Start at the origin facing the +X direction
         // If going in reverse, we are actually facing 180 degrees (In the robot's mind)
-        new Pose2d( 0, 0, new Rotation2d( reverseAuto ? 180 : 0 ) ),
+        new Pose2d( 0, 0, new Rotation2d( reverseAuto ? Math.PI : 0 ) ),
         // Pass through these two interior waypoints, making an 's' curve path
         List.of(
             new Translation2d( 1, 1 ),
             new Translation2d( 2, -1 )
         ),
         // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d( 3, 0, new Rotation2d( reverseAuto ? 180 : 0 ) ),
+        new Pose2d( 3, 0, new Rotation2d( reverseAuto ? Math.PI : 0 ) ),
         // Pass config
         config
     );
@@ -291,12 +292,12 @@ public class RobotContainer {
     //return ramseteCommand.andThen( () -> drive.tankDriveVolts( 0, 0 ) );
 
     return new TrajectoryCommand( 
-      new Pose2d( 0, 0, new Rotation2d( reverseAuto ? 180 : 0 ) ), 
+      new Pose2d( 0, 0, new Rotation2d( reverseAuto ? Math.PI : 0 ) ), 
       List.of(
         new Translation2d( 1, 1 ),
         new Translation2d( 2, -1 )
       ), 
-      new Pose2d( 3, 0, new Rotation2d( reverseAuto ? 180 : 0 ) ), 
+      new Pose2d( 3, 0, new Rotation2d( reverseAuto ? Math.PI : 0 ) ), 
       reverseAuto, 
       drive
     ).get();
