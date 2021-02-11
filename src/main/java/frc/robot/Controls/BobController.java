@@ -43,7 +43,7 @@ public class BobController extends Joystick {
 	}
 
 	public double getLeftStickY() {
-		return -this.getRawAxis( 1 );
+		return this.getRawAxis( 1 );
 	}
 
 	public double getRightStickX() {
@@ -51,7 +51,7 @@ public class BobController extends Joystick {
 	}
 
 	public double getRightStickY() {
-		return -this.getRawAxis( 5 );
+		return this.getRawAxis( 5 );
 	}
 
     public double getLeftTrigger(){

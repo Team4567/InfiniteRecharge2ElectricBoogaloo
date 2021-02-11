@@ -34,10 +34,14 @@ public final class Constants {
 	// CAN ID of Right Slave
     public static final int kCANRSlave = 1;
 
-	// CAN ID of Intake Motor
+	// CAN ID of the Shooter
+	public static final int kCANShooter = 40;
+	// CAN ID of the Intake
 	public static final int kCANIntake = 0;
-	// CAN ID of Flip Motor
-	public static final int kCANFlip = 15;
+	// CAN ID of the Brush
+	public static final int kCANBrush = 7;
+	// CAN ID of the Pulley
+	public static final int kCANPulley = 6;
 
 	// CAN ID of IMU (Gyro)
 	public static final int kCANIMU = 5;
@@ -55,6 +59,10 @@ public final class Constants {
 	public static final int kPCMRGearboxIn = 2;
 	public static final int kPCMRGearboxOut = 3;
 	
+	// Controls for Intake Lift
+	public static final int kPCMLiftIn = 4;
+	public static final int kPCMLiftOut = 5;
+
 	/**
 	 * This is a property of the Pigeon IMU, and should not be changed.
 	 */

@@ -38,6 +38,7 @@ import frc.robot.subsystems.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -56,6 +57,7 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   public final Drivetrain drive;
   public final Intake intake;
+  public final BallIn index;
   public final Misc misc;
 
   // Air Compressor
@@ -103,6 +105,9 @@ public class RobotContainer {
 
     // Intake subsystem
     intake = new Intake();
+
+    // Pulley and Brush
+    index = new BallIn();
 
     // Setup Compressor
     compressor = new Compressor(Constants.kCANPCMA);
@@ -196,16 +201,30 @@ public class RobotContainer {
 
     // Change something in TeleOp
     drive.setDefaultCommand(
-        new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ), drive ) );
+        new RunCommand( () -> drive.drive( controller::getLeftStickY, ()->-controller.getLeftStickX() ), drive ) );
 
-    intake.setDefaultCommand(new RunCommand(() -> intake.control(() -> controller.getRightStickY() * 0.5,
-        () -> controller.getRightTrigger() - controller.getLeftTrigger()), intake));
+    intake.setDefaultCommand( 
+      new RunCommand(
+        ()->{
+          intake.liftToggle( true );
+          intake.inToggle( true );
+        }
+        , intake)
+    );
 
-    misc.setDefaultCommand( new RunCommand(() -> misc.lightDefault( () -> targetVisible.getDouble(0) == 1 ), misc ) );
+    index.setDefaultCommand( 
+      new RunCommand(
+        ()->{
+          index.brushToggle( true );
+          index.pulleyToggle( true );
+        }
+      , index)
+    );
 
     controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
     controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
-
+    
+    
     /*
      * Available Inputs
      * No controls are bound to these inputs
