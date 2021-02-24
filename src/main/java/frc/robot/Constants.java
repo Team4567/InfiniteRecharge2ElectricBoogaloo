@@ -69,13 +69,22 @@ public final class Constants {
 	public final static int kPigeonUnitsPerRotation = 8192;
 
     // Tuned Values from the FRC Characterization Sheet
-	public static final double ksVolts = 0.22;
-    public static final double kvVoltSecondsPerMeter = 1.98;
-    public static final double kaVoltSecondsSquaredPerMeter = 0.2;
-	public static final double kPDriveVel = 8.5;
-	public static final double kDDriveVel = 8.5;
+	public static final double ksDrive = 0.22;
+    public static final double kvDrive = 1.98;
+    public static final double kaDrive = 0.2;
+	public static final double kPDrive = 8.5;
+	public static final double kDDrive = 8.5;
 	public static final double kTrackwidthMeters = 0.69;
 	
+	public static final double ksShooter = 0.713;
+	public static final double kvShooter = 0.0418;
+	public static final double kPShooter = 2.68;
+	public static final double kDShooter = 0.0;
+	public static final double unitSec_Rpm = 0.01464844; 
+	public static final double kShooterToleranceUnitsSec = 1.5;
+	public static final double kShooterToleranceRPM = kShooterToleranceUnitsSec * unitSec_Rpm;
+
+
 	// Takes the track width and makes a Kinematics file for the trajectory calculator to understand
     public static final DifferentialDriveKinematics kDriveKinematics =
 		new DifferentialDriveKinematics( kTrackwidthMeters );

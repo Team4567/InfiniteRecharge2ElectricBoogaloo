@@ -16,16 +16,17 @@ import frc.robot.Constants;
 
 public class BasicShooter extends SubsystemBase {
   TalonSRX shooter;
+  double constant = 600/4096;
   /** Creates a new BasicShooter. */
   public BasicShooter(){
     shooter = new TalonSRX( Constants.kCANShooter );
     shooter.configFactoryDefault();
     shooter.setNeutralMode( NeutralMode.Coast );
-    shooter.setInverted( false );
+    shooter.setInverted( true );
     shooter.configPeakOutputForward( +1.0 );
     shooter.configPeakOutputReverse( -1.0 );
-    shooter.configSelectedFeedbackSensor( TalonSRXFeedbackDevice.CTRE_MagEncoder_Relative, 0, 0 );
-    shooter.configSelectedFeedbackCoefficient( 1/4096 );
+    shooter.configSelectedFeedbackSensor( TalonSRXFeedbackDevice.CTRE_MagEncoder_Absolute, 0, 0 );
+    shooter.configSelectedFeedbackCoefficient( constant );
   }
 
   @Override

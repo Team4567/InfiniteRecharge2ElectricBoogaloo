@@ -58,9 +58,9 @@ public class TrajectoryCommand extends RamseteCommand {
       new RamseteController( Constants.kRamseteB, Constants.kRamseteZeta ),
 
       // FeedForward
-      new SimpleMotorFeedforward( Constants.ksVolts,
-                                   Constants.kvVoltSecondsPerMeter,
-                                   Constants.kaVoltSecondsSquaredPerMeter ),
+      new SimpleMotorFeedforward( Constants.ksDrive,
+                                   Constants.kvDrive,
+                                   Constants.kaDrive ),
 
       // DriveKinematics                             
       Constants.kDriveKinematics,
@@ -69,10 +69,10 @@ public class TrajectoryCommand extends RamseteCommand {
       drive::getWheelSpeeds,
 
       // Left PID
-      new PIDController( Constants.kPDriveVel, 0, Constants.kDDriveVel ),
+      new PIDController( Constants.kPDrive, 0, Constants.kDDrive ),
 
       // Right PID
-      new PIDController( Constants.kPDriveVel, 0, Constants.kDDriveVel ),
+      new PIDController( Constants.kPDrive, 0, Constants.kDDrive ),
 
       // Output Volts
       drive::tankDriveVolts,
@@ -108,9 +108,9 @@ public class TrajectoryCommand extends RamseteCommand {
             // Apply the voltage constraint 
             .addConstraint( 
                 new DifferentialDriveVoltageConstraint(
-                new SimpleMotorFeedforward( Constants.ksVolts,
-                                         Constants.kvVoltSecondsPerMeter,
-                                         Constants.kaVoltSecondsSquaredPerMeter),
+                new SimpleMotorFeedforward( Constants.ksDrive,
+                                         Constants.kvDrive,
+                                         Constants.kaDrive),
                 Constants.kDriveKinematics,
                 10 ) 
               )
@@ -142,9 +142,9 @@ public class TrajectoryCommand extends RamseteCommand {
             // Apply the voltage constraint 
             .addConstraint( 
                 new DifferentialDriveVoltageConstraint(
-                new SimpleMotorFeedforward( Constants.ksVolts,
-                                         Constants.kvVoltSecondsPerMeter,
-                                         Constants.kaVoltSecondsSquaredPerMeter),
+                new SimpleMotorFeedforward( Constants.ksDrive,
+                                         Constants.kvDrive,
+                                         Constants.kaDrive),
                 Constants.kDriveKinematics,
                 10 ) 
               )

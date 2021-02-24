@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
@@ -31,11 +33,19 @@ public class BallIn extends SubsystemBase {
     // This method will be called once per scheduler run
   }
 
-  public void brushToggle( boolean on ){
-    brush.set( ControlMode.PercentOutput, on ? 1 : 0 );
+  public void brushPower( double power ){
+    brush.set( ControlMode.PercentOutput, power );
   }
 
-  public void pulleyToggle( boolean on ){
-    pulley.set( ControlMode.PercentOutput, on ? 1 : 0 );
+  public void pulleyPower( double power ){
+    pulley.set( ControlMode.PercentOutput, power );
+  }
+
+  public void brushPower( DoubleSupplier power ){
+    brushPower( power.getAsDouble() );
+  }
+
+  public void pulleyPower( DoubleSupplier power ){
+    pulleyPower( power.getAsDouble() );
   }
 }

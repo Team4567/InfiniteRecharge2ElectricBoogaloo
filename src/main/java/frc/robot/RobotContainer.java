@@ -59,7 +59,7 @@ public class RobotContainer {
   public final Intake intake;
   public final BallIn index;
   public final Misc misc;
-
+  public final AdvShooter shoot;
   // Air Compressor
   public final Compressor compressor;
   
@@ -72,7 +72,7 @@ public class RobotContainer {
   // See https://docs.limelightvision.io/en/latest/getting_started.html#programming
   NetworkTableInstance inst = NetworkTableInstance.getDefault();
   NetworkTable table, limelight;
-  NetworkTableEntry tx, ty, targetVisible, rpm, blink, kPAlign;
+  public NetworkTableEntry tx, ty, targetVisible, rpm, blink, kPAlign;
   
   // Constants for Limelight Calculations
   double angleLimelight = 0;
@@ -109,6 +109,8 @@ public class RobotContainer {
     // Pulley and Brush
     index = new BallIn();
 
+    shoot = new AdvShooter();
+
     // Setup Compressor
     compressor = new Compressor(Constants.kCANPCMA);
     compressor.setClosedLoopControl(true);
@@ -124,7 +126,7 @@ public class RobotContainer {
 
     rpm = table.getEntry("RPM");
     // setDouble sets the value within the NetworkTable, as the form of a double (Could use setBoolean() for boolean, etc.)
-    rpm.setDouble(-8000);
+    rpm.setDouble(5000);
 
     blink = table.getEntry("Blink");
     blink.setDouble(0);
@@ -142,7 +144,7 @@ public class RobotContainer {
 
     // Emergency button to reset commands, interrupting all active commands.
     SmartDashboard.putData("Reset Cmds",
-        new InstantCommand(() -> System.out.println("All Subsystems Reset!"), drive, misc, intake));
+        new InstantCommand(() -> System.out.println("All Subsystems Reset!"), drive, misc, intake, shoot, index));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -202,12 +204,11 @@ public class RobotContainer {
     // Change something in TeleOp
     drive.setDefaultCommand(
         new RunCommand( () -> drive.drive( controller::getLeftStickY, ()->-controller.getLeftStickX() ), drive ) );
-
+/*
     intake.setDefaultCommand( 
       new RunCommand(
         ()->{
-          intake.liftToggle( true );
-          intake.inToggle( true );
+          intake.inPower( () -> controller.getRightTrigger() - controller.getLeftTrigger() );
         }
         , intake)
     );
@@ -215,11 +216,17 @@ public class RobotContainer {
     index.setDefaultCommand( 
       new RunCommand(
         ()->{
-          index.brushToggle( true );
-          index.pulleyToggle( true );
+          index.brushPower( 0 );
+          index.pulleyPower( 0 );
         }
       , index)
     );
+    */
+    //shoot.setDefaultCommand( new InstantCommand( () -> shoot.setSetpoint( 0 ), shoot ) );
+    //controller.aButton.whenPressed( new InstantCommand( () -> shoot.setSetpoint( rpm.getDouble(0) ), shoot ) )
+    //                  .whenReleased( new InstantCommand( () -> shoot.setSetpoint( 0 ), shoot ) );
+
+    //controller.aButton.toggleWhenActive( new RunCommand( () -> shoot.setPower( 0.3 ), shoot ) );
 
     controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
     controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
@@ -251,9 +258,9 @@ public class RobotContainer {
     // Create a voltage constraint to ensure we don't accelerate too fast
     TrajectoryConstraint autoVoltageConstraint =
         new DifferentialDriveVoltageConstraint(
-            new SimpleMotorFeedforward( Constants.ksVolts,
-                                       Constants.kvVoltSecondsPerMeter,
-                                       Constants.kaVoltSecondsSquaredPerMeter),
+            new SimpleMotorFeedforward( Constants.ksDrive,
+                                       Constants.kvDrive,
+                                       Constants.kaDrive),
             Constants.kDriveKinematics,
             10 );
 
@@ -292,13 +299,13 @@ public class RobotContainer {
         exampleTrajectory,
         drive::getPose,
         new RamseteController( Constants.kRamseteB, Constants.kRamseteZeta ),
-        new SimpleMotorFeedforward( Constants.ksVolts,
-                                   Constants.kvVoltSecondsPerMeter,
-                                   Constants.kaVoltSecondsSquaredPerMeter ),
+        new SimpleMotorFeedforward( Constants.ksDrive,
+                                   Constants.kvDrive,
+                                   Constants.kaDrive ),
         Constants.kDriveKinematics,
         drive::getWheelSpeeds,
-        new PIDController( Constants.kPDriveVel, 0, Constants.kDDriveVel ),
-        new PIDController( Constants.kPDriveVel, 0, Constants.kDDriveVel ),
+        new PIDController( Constants.kPDrive, 0, Constants.kDDrive ),
+        new PIDController( Constants.kPDrive, 0, Constants.kDDrive ),
         // RamseteCommand passes volts to the callback
         drive::tankDriveVolts,
         drive
