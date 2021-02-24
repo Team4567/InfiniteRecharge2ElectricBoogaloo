@@ -204,29 +204,10 @@ public class RobotContainer {
     // Change something in TeleOp
     drive.setDefaultCommand(
         new RunCommand( () -> drive.drive( controller::getLeftStickY, ()->-controller.getLeftStickX() ), drive ) );
-/*
-    intake.setDefaultCommand( 
-      new RunCommand(
-        ()->{
-          intake.inPower( () -> controller.getRightTrigger() - controller.getLeftTrigger() );
-        }
-        , intake)
-    );
 
-    index.setDefaultCommand( 
-      new RunCommand(
-        ()->{
-          index.brushPower( 0 );
-          index.pulleyPower( 0 );
-        }
-      , index)
-    );
-    */
-    //shoot.setDefaultCommand( new InstantCommand( () -> shoot.setSetpoint( 0 ), shoot ) );
-    //controller.aButton.whenPressed( new InstantCommand( () -> shoot.setSetpoint( rpm.getDouble(0) ), shoot ) )
-    //                  .whenReleased( new InstantCommand( () -> shoot.setSetpoint( 0 ), shoot ) );
-
-    //controller.aButton.toggleWhenActive( new RunCommand( () -> shoot.setPower( 0.3 ), shoot ) );
+    controller.aButton.whenPressed( new InstantCommand( () -> shoot.enable(), shoot ) );
+    controller.bButton.whenPressed( new InstantCommand( () -> shoot.disable(), shoot ) );
+    controller.xButton.whenPressed( new InstantCommand( () -> shoot.setSetpoint( rpm.getDouble(85) ) ) );
 
     controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
     controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );

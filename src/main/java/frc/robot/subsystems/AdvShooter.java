@@ -18,15 +18,18 @@ import frc.robot.Constants;
 
 public class AdvShooter extends PIDSubsystem {
   WPI_TalonSRX shooter;
+  // 10/4096
   double constant = 0.00244141;
   double measurement;
   private final SimpleMotorFeedforward m_shooterFeedforward =
       new SimpleMotorFeedforward( Constants.ksShooter,
-                                 Constants.kvShooter );
+                                  Constants.kvShooter,
+                                  Constants.kaShooter 
+                                );
   /** Creates a new AdvShooter. */
   public AdvShooter() {
     super( new PIDController( Constants.kPShooter, 0, Constants.kDShooter ) );
-    getController().setTolerance( Constants.kShooterToleranceRPM );
+    getController().setTolerance( Constants.kShooterToleranceRPS );
     setSetpoint(85);
     shooter = new WPI_TalonSRX( Constants.kCANShooter );
     shooter.configFactoryDefault();
@@ -39,25 +42,24 @@ public class AdvShooter extends PIDSubsystem {
   }
 
   @Override
-  public void useOutput(double output, double setpoint) {
+  public void useOutput( double output, double setpoint ) {
     // Use the output here
     double ff = m_shooterFeedforward.calculate( setpoint );
     double value = output + ff;
     shooter.setVoltage( value );
-    SmartDashboard.putNumber("Use Out", value );
     
-
+    SmartDashboard.putNumber( "Use Out", value );
   }
 
   public void setSetpoint( DoubleSupplier setpoint ) {
     // TODO Auto-generated method stub
-    setSetpoint(setpoint.getAsDouble()/60);
+    setSetpoint( setpoint.getAsDouble() / 60 );
   }
 
   @Override
   public double getMeasurement() {
     // Return the process variable measurement here
-    double v = shooter.getSelectedSensorVelocity()*constant;
+    double v = shooter.getSelectedSensorVelocity() * constant;
     measurement = v;
     return v;
   }
@@ -66,11 +68,15 @@ public class AdvShooter extends PIDSubsystem {
   public void periodic() {
     // TODO Auto-generated method stub
     super.periodic();
-    SmartDashboard.putNumber("Target", getSetpoint() );
-    SmartDashboard.putNumber("Measurement", measurement );
-    SmartDashboard.putNumber("Error", m_controller.getPositionError() );
-    SmartDashboard.putNumber("Motor Out", -shooter.getMotorOutputVoltage());
+    double s = getSetpoint();
+    double e = m_controller.getPositionError();
+    SmartDashboard.putNumber( "Target", s );
+    SmartDashboard.putNumber( "Measurement", measurement );
+    SmartDashboard.putNumber( "Error", e );
+    SmartDashboard.putNumber( "Raw Target", s / constant );
+    SmartDashboard.putNumber( "Raw Measurement", measurement / constant );
+    SmartDashboard.putNumber( "Raw Error", e / constant );
+    SmartDashboard.putNumber( "Motor Out", -shooter.getMotorOutputVoltage() );
     SmartDashboard.putBoolean("m_enabled", isEnabled() );
-    //SmartDashboard.putNumber("FF", m_shooterFeedforward.calculate(85));
   }
 }

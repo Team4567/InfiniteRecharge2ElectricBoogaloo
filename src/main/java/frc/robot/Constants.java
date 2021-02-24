@@ -78,12 +78,11 @@ public final class Constants {
 	
 	public static final double ksShooter = 0.713;
 	public static final double kvShooter = 0.0418;
+	public static final double kaShooter = 0.0819;
 	public static final double kPShooter = 2.68;
 	public static final double kDShooter = 0.0;
 	public static final double unitSec_Rpm = 0.01464844; 
-	public static final double kShooterToleranceUnitsSec = 1.5;
-	public static final double kShooterToleranceRPM = kShooterToleranceUnitsSec * unitSec_Rpm;
-
+	public static final double kShooterToleranceRPS = 1.5;
 
 	// Takes the track width and makes a Kinematics file for the trajectory calculator to understand
     public static final DifferentialDriveKinematics kDriveKinematics =

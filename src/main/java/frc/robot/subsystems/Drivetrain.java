@@ -38,16 +38,14 @@ public class Drivetrain extends SubsystemBase {
 	final double wheelCirc = 6*Math.PI;
 	public double inchesToUnits = 1;
 	public WPI_TalonFX leftMaster = new WPI_TalonFX( Constants.kCANLMaster ), 
-		leftSlave = new WPI_TalonFX( Constants.kCANLSlave ), 
-		rightMaster = new WPI_TalonFX( Constants.kCANRMaster ), 
-		rightSlave = new WPI_TalonFX( Constants.kCANRSlave );
-  public DoubleSolenoid gearShiftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut );
-  public DoubleSolenoid gearShiftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMRGearboxIn, Constants.kPCMRGearboxOut );;
+		                 leftSlave = new WPI_TalonFX( Constants.kCANLSlave ), 
+	                	 rightMaster = new WPI_TalonFX( Constants.kCANRMaster ), 
+		                 rightSlave = new WPI_TalonFX( Constants.kCANRSlave );
+  public DoubleSolenoid gearShiftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut ),
+                        gearShiftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMRGearboxIn, Constants.kPCMRGearboxOut );
 	public Gear gear, prevGear;
 	// The motors on the left side of the drive.
-
-
-  	private final SpeedControllerGroup m_leftMotors = new SpeedControllerGroup( leftMaster, leftSlave );
+  private final SpeedControllerGroup m_leftMotors = new SpeedControllerGroup( leftMaster, leftSlave );
 
   // The motors on the right side of the drive.
   private final SpeedControllerGroup m_rightMotors = new SpeedControllerGroup( rightMaster, rightSlave );
@@ -55,9 +53,6 @@ public class Drivetrain extends SubsystemBase {
   // The robot's drive, gives access to simplified drive commands. AUTOMATICALLY INVERTS ONE OF THE SIDES
   private final DifferentialDrive m_drive = new DifferentialDrive( m_leftMotors, m_rightMotors );
 
-
-				  
-  
   // The gyro sensor, gives robots angle, acceleration, and turn rate.
   private final IMU m_gyro = new IMU( Constants.kCANIMU );
 
@@ -248,6 +243,10 @@ public class Drivetrain extends SubsystemBase {
 
   public void setGear( Gear g ){
 	  gear = g;
+  }
+
+  public void toggleGear(){
+    gear = ( gear == Gear.HighGear ) ? Gear.LowGear : Gear.HighGear;
   }
 
 }
