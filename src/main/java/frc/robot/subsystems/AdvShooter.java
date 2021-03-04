@@ -48,12 +48,12 @@ public class AdvShooter extends PIDSubsystem {
     double value = output + ff;
     shooter.setVoltage( value );
     
-    SmartDashboard.putNumber( "Use Out", value );
+    //SmartDashboard.putNumber( "Use Out", value );
   }
 
   public void setSetpoint( DoubleSupplier setpoint ) {
     // TODO Auto-generated method stub
-    setSetpoint( setpoint.getAsDouble() / 60 );
+    setSetpoint( setpoint.getAsDouble() );
   }
 
   @Override
@@ -64,12 +64,22 @@ public class AdvShooter extends PIDSubsystem {
     return v;
   }
 
+  public void toggle(){
+    if( isEnabled() ){
+      disable();
+    }else{
+      enable();
+    }
+  }
+
   @Override
   public void periodic() {
     // TODO Auto-generated method stub
     super.periodic();
+    /*
     double s = getSetpoint();
     double e = m_controller.getPositionError();
+    
     SmartDashboard.putNumber( "Target", s );
     SmartDashboard.putNumber( "Measurement", measurement );
     SmartDashboard.putNumber( "Error", e );
@@ -78,5 +88,6 @@ public class AdvShooter extends PIDSubsystem {
     SmartDashboard.putNumber( "Raw Error", e / constant );
     SmartDashboard.putNumber( "Motor Out", -shooter.getMotorOutputVoltage() );
     SmartDashboard.putBoolean("m_enabled", isEnabled() );
+    */
   }
 }

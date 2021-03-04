@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
@@ -41,8 +42,7 @@ public class Drivetrain extends SubsystemBase {
 		                 leftSlave = new WPI_TalonFX( Constants.kCANLSlave ), 
 	                	 rightMaster = new WPI_TalonFX( Constants.kCANRMaster ), 
 		                 rightSlave = new WPI_TalonFX( Constants.kCANRSlave );
-  public DoubleSolenoid gearShiftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut ),
-                        gearShiftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMRGearboxIn, Constants.kPCMRGearboxOut );
+  public DoubleSolenoid gearShift = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMGearboxIn, Constants.kPCMGearboxOut );
 	public Gear gear, prevGear;
 	// The motors on the left side of the drive.
   private final SpeedControllerGroup m_leftMotors = new SpeedControllerGroup( leftMaster, leftSlave );
@@ -75,7 +75,13 @@ public class Drivetrain extends SubsystemBase {
 	  // 0.00012748857 RPP (Output Shaft)
 	  // 0.00240310306 Inches Per Pulse (Wheel)
 	  leftMaster.configSelectedFeedbackCoefficient( ( 6 * Math.PI ) / ( 2048 * lowGearRatio ) );
-	  rightMaster.configSelectedFeedbackCoefficient( ( 6 * Math.PI ) / ( 2048 * lowGearRatio ) );
+    rightMaster.configSelectedFeedbackCoefficient( ( 6 * Math.PI ) / ( 2048 * lowGearRatio ) );
+    
+    leftMaster.setNeutralMode( NeutralMode.Brake );
+    rightMaster.setNeutralMode( NeutralMode.Brake );
+    leftSlave.setNeutralMode( NeutralMode.Brake );
+    rightSlave.setNeutralMode( NeutralMode.Brake );
+
     resetEncoders();
     m_odometry = new DifferentialDriveOdometry( m_gyro.getRotation2d() );
   }
@@ -109,8 +115,7 @@ public class Drivetrain extends SubsystemBase {
         We put the if inside the parentheses with an inline if
         set( boolean ? true value : false value )
       */
-      gearShiftL.set( gear == Gear.HighGear ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse );
-      gearShiftR.set( gear == Gear.HighGear ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse );
+      gearShift.set( gear == Gear.HighGear ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse );
       prevGear = gear;
     }
   }
@@ -140,7 +145,7 @@ public class Drivetrain extends SubsystemBase {
    */
   public void resetOdometry( Pose2d pose ) {
     resetEncoders();
-    m_odometry.resetPosition(pose, m_gyro.getRotation2d());
+    m_odometry.resetPosition( pose, m_gyro.getRotation2d() );
   }
 
   /**
@@ -149,8 +154,8 @@ public class Drivetrain extends SubsystemBase {
    * @param fwd the commanded forward movement
    * @param rot the commanded rotation
    */
-  public void arcadeDrive(double fwd, double rot) {
-    m_drive.arcadeDrive(fwd, rot);
+  public void arcadeDrive( double fwd, double rot ) {
+    m_drive.arcadeDrive( fwd, rot );
   }
 
   public void drive( DoubleSupplier y, DoubleSupplier x ){
@@ -163,9 +168,9 @@ public class Drivetrain extends SubsystemBase {
    * @param leftVolts  the commanded left output
    * @param rightVolts the commanded right output
    */
-  public void tankDriveVolts(double leftVolts, double rightVolts) {
-    m_leftMotors.setVoltage(leftVolts);
-    m_rightMotors.setVoltage(-rightVolts);
+  public void tankDriveVolts( double leftVolts, double rightVolts ) {
+    m_leftMotors.setVoltage( leftVolts );
+    m_rightMotors.setVoltage( -rightVolts );
     m_drive.feed();
   }
 
@@ -212,7 +217,7 @@ public class Drivetrain extends SubsystemBase {
    * @param maxOutput the maximum output to which the drive will be constrained, Interval (0, 1]
    */
   public void setMaxOutput( double maxOutput ) {
-    m_drive.setMaxOutput(maxOutput);
+    m_drive.setMaxOutput( maxOutput );
   }
 
   /**

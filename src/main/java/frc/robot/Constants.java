@@ -37,9 +37,9 @@ public final class Constants {
 	// CAN ID of the Shooter
 	public static final int kCANShooter = 40;
 	// CAN ID of the Intake
-	public static final int kCANIntake = 0;
+	public static final int kCANIntake = 19;
 	// CAN ID of the Brush
-	public static final int kCANBrush = 7;
+	//public static final int kCANBrush = 7;
 	// CAN ID of the Pulley
 	public static final int kCANPulley = 6;
 
@@ -47,22 +47,21 @@ public final class Constants {
 	public static final int kCANIMU = 5;
 	
 	// CAN ID of Pneumatics Control Module A (Called A in case we have a 2nd)
-	public static final int kCANPCMA = 10;
+	public static final int kCANPCMA = 20;
 	
 	// PCM Port Numbers for the Left Gearbox Shifter
 	// This acts as a normal piston, but instead of being a long shaft it pushes the gears into different alignments for different ratios
-	public static final int kPCMLGearboxIn = 0;
-	public static final int kPCMLGearboxOut = 1;
+	public static final int kPCMGearboxIn = 2;
+	public static final int kPCMGearboxOut = 3;
 
 	// PCM Port Numbers for the Left Gearbox Shifter
 	// This acts as a normal piston, but instead of being a long shaft it pushes the gears into different alignments for different ratios
-	public static final int kPCMRGearboxIn = 2;
-	public static final int kPCMRGearboxOut = 3;
 	
 	// Controls for Intake Lift
-	public static final int kPCMLiftIn = 4;
-	public static final int kPCMLiftOut = 5;
-
+	public static final int kPCMLiftInL = 4;
+	public static final int kPCMLiftOutL = 5;
+	public static final int kPCMLiftInR = 6;
+	public static final int kPCMLiftOutR = 7;
 	/**
 	 * This is a property of the Pigeon IMU, and should not be changed.
 	 */

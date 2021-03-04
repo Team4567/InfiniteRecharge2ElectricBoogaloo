@@ -34,7 +34,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import frc.robot.Controls.BobController;
 import frc.robot.commands.*;
 import frc.robot.subsystems.*;
-
+import frc.robot.subsystems.Drivetrain.Gear;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -72,7 +72,7 @@ public class RobotContainer {
   // See https://docs.limelightvision.io/en/latest/getting_started.html#programming
   NetworkTableInstance inst = NetworkTableInstance.getDefault();
   NetworkTable table, limelight;
-  public NetworkTableEntry tx, ty, targetVisible, rpm, blink, kPAlign;
+  public NetworkTableEntry tx, ty, targetVisible, blink, kPAlign;
   
   // Constants for Limelight Calculations
   double angleLimelight = 0;
@@ -87,15 +87,20 @@ public class RobotContainer {
 
   // Presents a chooser for the driver to pick which auton to run out of a list
   SendableChooser<CommandGroupBase> chooser;
+  SendableChooser<Driver> driveChoose;
 
   // Boolean for testing driving the trajectories in reverse
   boolean reverseAuto = false;
 
 
+  public enum Driver{
+    MattGTA, MattNorm, Joe, Paul
+  }
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
+    
     // Initiate our drivetrain, defaulting to low gear
     drive = new Drivetrain();
     drive.setGear(Drivetrain.Gear.LowGear);
@@ -112,31 +117,28 @@ public class RobotContainer {
     shoot = new AdvShooter();
 
     // Setup Compressor
-    compressor = new Compressor(Constants.kCANPCMA);
-    compressor.setClosedLoopControl(true);
+    compressor = new Compressor( Constants.kCANPCMA );
+    compressor.setClosedLoopControl( true );
     compressor.start();
 
     // Define all Limelight NetworkTables Tables and Entries
-    limelight = inst.getTable("limelight");
-    tx = limelight.getEntry("tx");
-    ty = limelight.getEntry("ty");
-    targetVisible = limelight.getEntry("tv");
+    limelight = inst.getTable( "limelight" );
+    tx = limelight.getEntry( "tx" );
+    ty = limelight.getEntry( "ty" );
+    targetVisible = limelight.getEntry( "tv" );
 
     table = inst.getTable("Table");
 
-    rpm = table.getEntry("RPM");
-    // setDouble sets the value within the NetworkTable, as the form of a double (Could use setBoolean() for boolean, etc.)
-    rpm.setDouble(5000);
-
     blink = table.getEntry("Blink");
-    blink.setDouble(0);
-
-    kPAlign = table.getEntry("kPAlign");
-    kPAlign.setDouble(0);
+    blink.setDouble(-0.17);
 
     // Define chooser, followed by available options
     chooser = new SendableChooser<CommandGroupBase>();
-    
+    driveChoose = new SendableChooser<Driver>();
+    driveChoose.addOption("Joe", Driver.Joe );
+    driveChoose.addOption("MattGTA", Driver.MattGTA );
+    driveChoose.addOption("MattNorm", Driver.MattNorm );
+    driveChoose.addOption("Paul", Driver.Paul );
     // None atm
     // chooser.addOption("Test", new SequentialCommandGroup( new TurnAngle( drive, 0
     // ), new DriveStraight( drive, 0 ) ) );
@@ -144,15 +146,26 @@ public class RobotContainer {
 
     // Emergency button to reset commands, interrupting all active commands.
     SmartDashboard.putData("Reset Cmds",
-        new InstantCommand(() -> System.out.println("All Subsystems Reset!"), drive, misc, intake, shoot, index));
+      new InstantCommand( 
+        () -> System.out.println( "All Subsystems Reset!" ), 
+        drive, misc, intake, shoot, index
+      )
+    );
+
+    SmartDashboard.putData( "Select Driver", driveChoose );
+
+    SmartDashboard.putData("New Controls",
+      new InstantCommand( 
+        () -> {
+          configureButtonBindings( driveChoose.getSelected() );
+          System.out.println( "Controls Reset!" );
+
+        }
+      )
+    );
 
     // Configure the button bindings
-    configureButtonBindings();
-  }
-
-  public double getTargetRPM() {
-    // Get Double will get the value of the rpm entry, but if none can be found, default to the inside number (0)
-    return rpm.getDouble(0);
+    configureButtonBindings( Driver.Joe );
   }
 
   public boolean haveTarget() {
@@ -199,28 +212,146 @@ public class RobotContainer {
    * A default comamnd will be active when there are no other commands to be ran in the list for that subsystem. 
    * So, when theres no more auto commands in teleop, it defualts to their controls
    */
-  private void configureButtonBindings() {
+  private void configureButtonBindings( Driver d ) {
+    switch( d ){
+      case Joe:
+        // Change something in TeleOp
+        drive.setDefaultCommand(
+          new RunCommand( 
+            () -> drive.drive( controller::getLeftStickY, () -> -controller.getLeftStickX() )
+            , drive 
+          ) 
+        );
 
-    // Change something in TeleOp
-    drive.setDefaultCommand(
-        new RunCommand( () -> drive.drive( controller::getLeftStickY, ()->-controller.getLeftStickX() ), drive ) );
+        controller.startButton.whenPressed( new InstantCommand( drive::toggleGear ) );
 
+        index.setDefaultCommand( 
+          new RunCommand( 
+            () -> index.pulleyPower( controller::getRightStickY )
+            , index 
+          ) 
+        );
+
+        intake.setDefaultCommand(
+          new RunCommand(
+            () -> intake.inPower( () -> controller.getRightTrigger()-controller.getLeftTrigger() )
+            , intake
+          )
+        );
+
+        controller.rightBumper.whenPressed( new InstantCommand( intake::liftToggle ) );
+
+        misc.setDefaultCommand( 
+          new RunCommand( 
+            () -> misc.lightSet( () -> compressor.getPressureSwitchValue() ? 0.75 : blink.getDouble(0) )
+            , misc
+          )
+        );
+
+        controller.aButton.whenPressed( new InstantCommand( shoot::toggle, shoot ) );
+    
+      break;
+      case MattGTA:
+        drive.setDefaultCommand( 
+          new RunCommand(
+            () -> drive.drive( () -> controller.getRightTrigger() - controller.getLeftTrigger(), () -> -controller.getLeftStickX() )
+            , drive
+          )
+        );
+
+        controller.dPadRight.whenPressed( new InstantCommand( drive::toggleGear ) );
+
+        intake.setDefaultCommand( 
+          new RunCommand(
+              () -> intake.inPower( 0 )
+            , intake
+            )
+        );
+
+        controller.rightBumper.whenActive( new RunCommand( () -> intake.inPower( 1 ), intake ) );
+        controller.leftBumper.whenActive( new RunCommand( () -> intake.inPower( -1 ), intake ) );
+        controller.startButton.whenPressed( new InstantCommand( intake::liftToggle ) );
+
+        controller.dPadUp.whenActive( new RunCommand( () -> index.pulleyPower( 1 ), index ) );
+        controller.dPadDown.whenActive( new RunCommand( () -> index.pulleyPower( -1 ), index ) );
+
+        controller.aButton.whenPressed( new InstantCommand( shoot::toggle, shoot ) );
+
+      break;
+      case MattNorm:
+        drive.setDefaultCommand(
+          new RunCommand( 
+            () -> drive.drive( controller::getLeftStickY, () -> -controller.getLeftStickX() )
+            , drive 
+          ) 
+        );
+        controller.xButton.whenPressed( new InstantCommand( () -> drive.setGear( Gear.LowGear ) ) ); 
+        controller.bButton.whenPressed( new InstantCommand( () -> drive.setGear( Gear.HighGear ) ) ); 
+
+        controller.aButton.whenPressed( new InstantCommand( shoot::toggle, shoot ) );
+
+        intake.setDefaultCommand(
+          new RunCommand(
+            () -> intake.inPower( () -> controller.getRightTrigger()-controller.getLeftTrigger() )
+            , intake
+          )
+        );
+        controller.startButton.whenPressed( new InstantCommand( intake::liftToggle ) );
+
+        controller.rightBumper.whileHeld( new RunCommand( () -> index.pulleyPower( 1 ), index ) );
+        controller.leftBumper.whileHeld( new RunCommand( () -> index.pulleyPower( -1 ), index ) );
+
+      break;
+      case Paul:
+        drive.setDefaultCommand(
+          new RunCommand( 
+            () -> drive.drive( controller::getLeftStickY, () -> -controller.getLeftStickX() )
+            , drive 
+          ) 
+        );
+        controller.leftBumper.whenPressed( drive::toggleGear );
+        
+        controller.yButton.whileHeld( () -> intake.inPower( 1 ), intake );
+        controller.xButton.whileHeld( () -> intake.inPower( -1 ), intake );
+
+        controller.aButton.whileHeld( () -> index.pulleyPower( 1 ), index );
+        controller.bButton.whileHeld( () -> index.pulleyPower( -1 ), index );
+
+        controller.dPadDown.whenPressed( new InstantCommand( intake::liftToggle ) );
+
+        controller.rightBumper.whenPressed( new InstantCommand( shoot::toggle ) );
+
+      break;
+    
+    }
+
+    /*
     controller.aButton.whenPressed( new InstantCommand( () -> shoot.enable(), shoot ) );
     controller.bButton.whenPressed( new InstantCommand( () -> shoot.disable(), shoot ) );
     controller.xButton.whenPressed( new InstantCommand( () -> shoot.setSetpoint( rpm.getDouble(85) ) ) );
+    controller.startButton.whenPressed( 
+      new InstantCommand(
+        () -> intake.liftToggle( false )
+      )
+    );
 
+    controller.selectButton.whenPressed( 
+      new InstantCommand(
+        () -> intake.liftToggle( true )
+      )
+    );
     controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
     controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
-    
-    
+    */
+
     /*
      * Available Inputs
      * No controls are bound to these inputs
      * 
      * Left and Right Stick Click
      * Right Stick X
-     * X A Y B 
-     * Start Select 
+     * X Y B
+     * Select
      * DPad
      * 
      */

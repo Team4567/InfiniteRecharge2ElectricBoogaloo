@@ -8,6 +8,7 @@
 package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
@@ -23,7 +24,7 @@ public class Misc extends SubsystemBase {
    * Creates a new Misc.
    */
   public Misc() {
-    blinkin = new Spark( 0 );
+    blinkin = new Spark( 9 );
     pdp = new PowerDistributionPanel();
     
   }
@@ -45,29 +46,11 @@ public class Misc extends SubsystemBase {
     }
   }
   
-  public void lightToControl(){
-    switch( getGameMessage() ){
-      case "R":
-        // Red
-        blinkin.set( 0.61 );
-        break;
-      case "G":
-        // Green
-        blinkin.set( 0.77 );
-        break;
-      case "B":
-        // Blue
-        blinkin.set( 0.87 );
-        break;
-      case "Y":
-        // Yellow
-        blinkin.set( 0.69 );
-        break;
-      default:
-        // Black
-        blinkin.set( 0.99 );
-        break; 
-    }
+  public void lightSet( double in ){
+    blinkin.set( in );
+  }
+  public void lightSet( DoubleSupplier in ){
+    lightSet( in.getAsDouble() );
   }
 
   public void lightDefault( BooleanSupplier visionTarget ){

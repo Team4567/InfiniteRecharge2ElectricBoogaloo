@@ -16,16 +16,19 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Intake extends SubsystemBase {
-  DoubleSolenoid lift;
+  DoubleSolenoid liftL, liftR;
   VictorSPX spin;
+  boolean up;
   /** Creates a new Intake. */
   public Intake() {
     spin = new VictorSPX( Constants.kCANIntake );
-    lift = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLiftIn, Constants.kPCMLiftOut );
+    spin.setInverted( true );
+    liftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLiftInL, Constants.kPCMLiftOutL );
+    liftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLiftInR, Constants.kPCMLiftOutR );
   }
 
   public void liftToggle( boolean on ){
-    lift.set( on ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse );
+    up = on;
   }
 
   public void inPower( double power ){
@@ -36,15 +39,24 @@ public class Intake extends SubsystemBase {
     liftToggle( on.getAsBoolean() );
   }
 
+  public void liftToggle(){
+    up = !up;
+  }
+
   public void inPower( DoubleSupplier power ){
     inPower( power.getAsDouble() );
   }
 
   public boolean getUp(){
-    return lift.get() == Value.kReverse;
+    return liftL.get() == Value.kReverse;
   }
+
   @Override
   public void periodic() {
+
     // This method will be called once per scheduler run
+      liftL.set( up ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse );
+      liftR.set( !up ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse );
+  
   }
 }
