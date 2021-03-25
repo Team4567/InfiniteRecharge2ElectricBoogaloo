@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Joystick.AxisType;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.controller.RamseteController;
 import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
@@ -29,6 +30,13 @@ import edu.wpi.first.wpilibj.trajectory.constraint.TrajectoryConstraint;
 
 import java.util.List;
 
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import frc.robot.Controls.BobController;
@@ -72,7 +80,7 @@ public class RobotContainer {
   // See https://docs.limelightvision.io/en/latest/getting_started.html#programming
   NetworkTableInstance inst = NetworkTableInstance.getDefault();
   NetworkTable table, limelight;
-  public NetworkTableEntry tx, ty, targetVisible, blink, kPAlign;
+  public NetworkTableEntry tx, ty, targetVisible, kPAlign;
   
   // Constants for Limelight Calculations
   double angleLimelight = 0;
@@ -80,13 +88,15 @@ public class RobotContainer {
   // Center of target
   double heightTarget = 89.75;
   double ballCenter = 3.5;
+  double blink = 0.71;
+  int stage = 1;
 
 
   // Define our controller in USB Port 0 (Port # shown in Driver Station)
   BobController controller = new BobController(0);
 
   // Presents a chooser for the driver to pick which auton to run out of a list
-  SendableChooser<CommandGroupBase> chooser;
+  SendableChooser<AutoPath> chooser;
   SendableChooser<Driver> driveChoose;
 
   // Boolean for testing driving the trajectories in reverse
@@ -94,7 +104,11 @@ public class RobotContainer {
 
 
   public enum Driver{
-    MattGTA, MattNorm, Joe, Paul
+    MattGTA, MattNorm, Joe, Paul, Music
+  }
+
+  public enum AutoPath{
+    test,ball,barrel,slalom,bounce
   }
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -129,16 +143,21 @@ public class RobotContainer {
 
     table = inst.getTable("Table");
 
-    blink = table.getEntry("Blink");
-    blink.setDouble(-0.17);
 
     // Define chooser, followed by available options
-    chooser = new SendableChooser<CommandGroupBase>();
+    chooser = new SendableChooser<AutoPath>();
+    chooser.addOption("Test", AutoPath.test );
+    chooser.addOption("Ball", AutoPath.ball );
+    chooser.addOption("Barrel", AutoPath.barrel );
+    chooser.addOption("Slalom", AutoPath.slalom );
+    chooser.addOption("Bounce", AutoPath.bounce );
+
     driveChoose = new SendableChooser<Driver>();
     driveChoose.addOption("Joe", Driver.Joe );
     driveChoose.addOption("MattGTA", Driver.MattGTA );
     driveChoose.addOption("MattNorm", Driver.MattNorm );
     driveChoose.addOption("Paul", Driver.Paul );
+    driveChoose.addOption("Music", Driver.Music );
     // None atm
     // chooser.addOption("Test", new SequentialCommandGroup( new TurnAngle( drive, 0
     // ), new DriveStraight( drive, 0 ) ) );
@@ -166,6 +185,25 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings( Driver.Joe );
+    new Thread(() -> {
+      UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+      camera.setResolution(640, 480);
+
+      CvSink cvSink = CameraServer.getInstance().getVideo();
+      CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 640, 480);
+
+      Mat source = new Mat();
+      Mat output = new Mat();
+
+      while(!Thread.interrupted()) {
+        if (cvSink.grabFrame(source) == 0) {
+          continue;
+        }
+        //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+        outputStream.putFrame(output);
+      }
+    }).start();
+
   }
 
   public boolean haveTarget() {
@@ -243,13 +281,68 @@ public class RobotContainer {
 
         misc.setDefaultCommand( 
           new RunCommand( 
-            () -> misc.lightSet( () -> compressor.getPressureSwitchValue() ? 0.75 : blink.getDouble(0) )
+            () -> misc.lightSet( () -> blink )
             , misc
           )
         );
 
-        controller.aButton.whenPressed( new InstantCommand( shoot::toggle, shoot ) );
+        controller.bButton.whenPressed( new InstantCommand( shoot::toggle, shoot ) );
     
+        controller.yButton.whenPressed( ()->{
+          stage++;
+          if( stage > 4 ){
+            stage = 4;
+          }
+          switch( stage ){
+            case 1:
+              blink = 0.71;
+              shoot.setSetpoint(5000);
+            break;
+            case 2:
+              blink = 0.67;
+              shoot.setSetpoint(5000);
+            break;
+            case 3:
+              blink = 0.85;
+              shoot.setSetpoint(5000);
+            break;
+            case 4:
+              blink = 0.61;
+              shoot.setSetpoint(5000);
+            break;
+          }
+        });
+        controller.aButton.whenPressed( ()->{
+          stage--;
+          if( stage < 1 ){
+            stage = 1;
+          }
+          switch( stage ){
+            case 1:
+              blink = 0.71;
+              shoot.setSetpoint(5000);
+            break;
+            case 2:
+              blink = 0.67;
+              shoot.setSetpoint(5000);
+            break;
+            case 3:
+              blink = 0.85;
+              shoot.setSetpoint(5000);
+            break;
+            case 4:
+              blink = 0.61;
+              shoot.setSetpoint(5000);
+            break;
+          }
+        });
+
+        controller.dPadUp.whileHeld( new TrajectoryCommand( 
+          new Pose2d( 0, 0, new Rotation2d( 0 ) ), 
+          List.of( ), 
+          new Pose2d( 0, 0, new Rotation2d( tx.getDouble(0) ) ),  false, drive ) 
+        );
+
       break;
       case MattGTA:
         drive.setDefaultCommand( 
@@ -322,12 +415,13 @@ public class RobotContainer {
         controller.rightBumper.whenPressed( new InstantCommand( shoot::toggle ) );
 
       break;
-    
+
     }
 
     /*
     controller.aButton.whenPressed( new InstantCommand( () -> shoot.enable(), shoot ) );
-    controller.bButton.whenPressed( new InstantCommand( () -> shoot.disable(), shoot ) );
+    controller.bButton.whenPressed( new InstantCommand( () -> shoot.
+    disable(), shoot ) );
     controller.xButton.whenPressed( new InstantCommand( () -> shoot.setSetpoint( rpm.getDouble(85) ) ) );
     controller.startButton.whenPressed( 
       new InstantCommand(
@@ -427,8 +521,97 @@ public class RobotContainer {
     drive.resetOdometry( exampleTrajectory.getInitialPose() );
 
     // Run path following command, then stop at the end.
-    //return ramseteCommand.andThen( () -> drive.tankDriveVolts( 0, 0 ) );
+    //return ramseteCommand.andThen( () -> drive.tankDriveVolts( 0, 0 ) ) bn ;
+    AutoPath selected = chooser.getSelected();
+    if( selected == AutoPath.ball ){
 
+    }else if( selected == AutoPath.barrel ){
+      return new TrajectoryCommand( 
+        new Pose2d( 0, 0, new Rotation2d( 0 ) ), 
+        List.of(
+          new Translation2d( 9, 0 ),
+          new Translation2d( 11.5, -2.5 ),
+          new Translation2d( 9, -5 ),
+          new Translation2d( 7.5, -2.5 ),
+          new Translation2d( 9, 0 ),
+          new Translation2d( 16.5, 0 ),
+          new Translation2d( 19, 2.5 ),
+          new Translation2d( 16, 5 ),
+          new Translation2d( 13.5, 2.5 ),
+          new Translation2d( 16.5, 0 ),
+          new Translation2d( 21.5, -5 ),
+          new Translation2d( 24, -2.5 ),
+          new Translation2d( 21.5, 0 )
+        ), 
+        new Pose2d( 0, 0, new Rotation2d( 0 ) ), 
+        false, 
+        drive
+      ).get();
+    }else if( selected == AutoPath.slalom ){
+      return new TrajectoryCommand( 
+        new Pose2d( 0, 0, new Rotation2d( 0 ) ), 
+        List.of(
+          new Translation2d( 4, 2.5 ),
+          new Translation2d( 6.5, 5 ),
+          //new Translation2d( 11.5, 7 ),
+          new Translation2d( 16.5, 5 ),
+          new Translation2d( 19, 2.5 ),
+          new Translation2d( 21.5, 0 ),
+          new Translation2d( 24, 2.5 ),
+          new Translation2d( 21.5, 5 ),
+          new Translation2d( 19, 2.5 ),
+          new Translation2d( 16.5, 0 ),
+          //new Translation2d( 11.5, -2 ),
+          new Translation2d( 6.5, 0 ),
+          new Translation2d( 4, 2.5 )
+        ), 
+        new Pose2d( -2.5, 5, new Rotation2d( 0 ) ), 
+        false, 
+        drive
+      ).get();
+    }else if( selected == AutoPath.bounce ){
+      TrajectoryCommand a = new TrajectoryCommand( 
+        new Pose2d( 0, 0, new Rotation2d( 0 ) ), 
+        List.of(
+          new Translation2d( 4, 2.5 )
+        ), 
+        new Pose2d( 4, 5, new Rotation2d( Math.PI/2 ) ), 
+        false, 
+        drive
+      );
+      TrajectoryCommand b = new TrajectoryCommand( 
+        new Pose2d( 4, 5, new Rotation2d( Math.PI/2 ) ), 
+        List.of(
+          new Translation2d( 6.5, -2.5 ),
+          new Translation2d( 9, -5 ),
+          new Translation2d( 11.5, -2.5 )
+        ), 
+        new Pose2d( 11.5, 5, new Rotation2d( 3*Math.PI/2 ) ), 
+        true, 
+        drive
+      );
+      TrajectoryCommand c = new TrajectoryCommand( 
+        new Pose2d( 11.5, 5, new Rotation2d( 3*Math.PI/2 ) ), 
+        List.of(
+          new Translation2d( 11.5, -2.5 ),
+          new Translation2d( 15.25, -5 ),
+          new Translation2d( 19, -2.5 )
+        ), 
+        new Pose2d( 19, 5, new Rotation2d( Math.PI/2 ) ), 
+        false, 
+        drive
+      );
+      TrajectoryCommand d = new TrajectoryCommand( 
+        new Pose2d( 19, 5, new Rotation2d( Math.PI/2 ) ), 
+        List.of(
+          new Translation2d( 19, 2.5 )
+        ), 
+        new Pose2d( 24, 0, new Rotation2d( Math.PI ) ), 
+        false, 
+        drive
+      );
+      return new SequentialCommandGroup( a.get(), b.get(), c.get(), d.get() );
+    }
     return new TrajectoryCommand( 
       new Pose2d( 0, 0, new Rotation2d( reverseAuto ? Math.PI : 0 ) ), 
       List.of(
@@ -439,6 +622,6 @@ public class RobotContainer {
       reverseAuto, 
       drive
     ).get();
-
+    
   }
 }

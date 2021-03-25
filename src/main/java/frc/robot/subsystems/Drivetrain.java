@@ -1,11 +1,14 @@
 package frc.robot.subsystems;
 
+import java.util.ArrayList;
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.music.Orchestra;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -84,6 +87,8 @@ public class Drivetrain extends SubsystemBase {
 
     resetEncoders();
     m_odometry = new DifferentialDriveOdometry( m_gyro.getRotation2d() );
+
+
   }
 
   @Override
@@ -253,5 +258,6 @@ public class Drivetrain extends SubsystemBase {
   public void toggleGear(){
     gear = ( gear == Gear.HighGear ) ? Gear.LowGear : Gear.HighGear;
   }
+
 
 }
