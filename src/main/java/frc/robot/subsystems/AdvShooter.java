@@ -71,6 +71,10 @@ public class AdvShooter extends PIDSubsystem {
       enable();
     }
   }
+  
+  public boolean atSetpoint(){
+    return getController().atSetpoint();
+  }
 
   @Override
   public void periodic() {

@@ -68,12 +68,12 @@ public final class Constants {
 	public final static int kPigeonUnitsPerRotation = 8192;
 
     // Tuned Values from the FRC Characterization Sheet
-	public static final double ksDrive = 0.22;
-    public static final double kvDrive = 1.98;
-    public static final double kaDrive = 0.2;
-	public static final double kPDrive = 8.5;
-	public static final double kDDrive = 8.5;
-	public static final double kTrackwidthMeters = 0.69;
+	public static final double ksDrive = 0.591;
+    public static final double kvDrive = 1.56;
+    public static final double kaDrive = 0.182;
+	public static final double kPDrive = 2.54;
+	public static final double kDDrive = 0;
+	public static final double kTrackwidthMeters = 1.5384173415390952;
 	
 	public static final double ksShooter = 0.713;
 	public static final double kvShooter = 0.0418;
@@ -88,8 +88,8 @@ public final class Constants {
 		new DifferentialDriveKinematics( kTrackwidthMeters );
 		
 	// Max Speed and Acceleration
-	public static final double kMaxSpeedMetersPerSecond = 3;
-	public static final double kMaxAccelerationMetersPerSecondSquared = 3;
+	public static final double kMaxSpeedMetersPerSecond = 0.25;
+	public static final double kMaxAccelerationMetersPerSecondSquared = 0.1;
 
 	// Reasonable baseline values for a RAMSETE follower in units of meters and seconds
 	// Ramsete Controller Converts Point Trajectories to Voltage output for the robots motors

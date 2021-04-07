@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -57,7 +58,7 @@ public class Drivetrain extends SubsystemBase {
   private final DifferentialDrive m_drive = new DifferentialDrive( m_leftMotors, m_rightMotors );
 
   // The gyro sensor, gives robots angle, acceleration, and turn rate.
-  private final IMU m_gyro = new IMU( Constants.kCANIMU );
+  public final IMU m_gyro = new IMU( Constants.kCANIMU );
 
   // Odometry class for tracking robot pose
   // Odometry simply means tracking a robot using a variety of sensors to apporximate its real life position
@@ -69,7 +70,7 @@ public class Drivetrain extends SubsystemBase {
    */
   public Drivetrain() {
     // Tell the leftMaster to reference its integrated encoder as its sensor
-    leftMaster.configSelectedFeedbackSensor( TalonFXFeedbackDevice.IntegratedSensor, 0, 0 );
+    leftSlave.configSelectedFeedbackSensor( TalonFXFeedbackDevice.IntegratedSensor, 0, 0 );
     // Tell the rightMaster to reference its integrated encoder as its sensor
     rightMaster.configSelectedFeedbackSensor( TalonFXFeedbackDevice.IntegratedSensor, 0, 0 );
 	  // 2048 CPR
@@ -77,8 +78,8 @@ public class Drivetrain extends SubsystemBase {
 	  // 7843.84 PPR (Output Shaft)
 	  // 0.00012748857 RPP (Output Shaft)
 	  // 0.00240310306 Inches Per Pulse (Wheel)
-	  leftMaster.configSelectedFeedbackCoefficient( ( 6 * Math.PI ) / ( 2048 * lowGearRatio ) );
-    rightMaster.configSelectedFeedbackCoefficient( ( 6 * Math.PI ) / ( 2048 * lowGearRatio ) );
+	  leftSlave.configSelectedFeedbackCoefficient( 1 );
+    rightMaster.configSelectedFeedbackCoefficient( 1 );
     
     leftMaster.setNeutralMode( NeutralMode.Brake );
     rightMaster.setNeutralMode( NeutralMode.Brake );
@@ -87,23 +88,27 @@ public class Drivetrain extends SubsystemBase {
 
     resetEncoders();
     m_odometry = new DifferentialDriveOdometry( m_gyro.getRotation2d() );
-
+    
 
   }
 
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
-    m_odometry.update( m_gyro.getRotation2d(), Units.feetToMeters( leftMaster.getSelectedSensorPosition() / 12 ),
-      Units.feetToMeters( rightMaster.getSelectedSensorPosition() / 12 ) );
-
+    m_odometry.update( m_gyro.getRotation2d(),  leftSlave.getSelectedSensorPosition()* ( 0.1524 * Math.PI ) / ( 2048 * highGearRatio ),
+       -rightMaster.getSelectedSensorPosition()* ( 0.1524 * Math.PI ) / ( 2048 * highGearRatio ) );
+    var t = m_odometry.getPoseMeters().getTranslation();
+    SmartDashboard.putNumber("x", t.getX() );
+    SmartDashboard.putNumber("y", t.getY() );
     // Puts data that we may need into the Shuffleboard to view it
     SmartDashboard.putData( "Drivetrain", m_drive );
-    SmartDashboard.putData( "Gyro", m_gyro );
-    SmartDashboard.putNumber( "Left Encoder", leftMaster.getSelectedSensorPosition() );
-    SmartDashboard.putNumber( "Right Encoder", rightMaster.getSelectedSensorPosition() );
-    SmartDashboard.putNumber( "Left Velocity", leftMaster.getSelectedSensorVelocity() * 10 );
-    SmartDashboard.putNumber( "Right Velocity", rightMaster.getSelectedSensorVelocity() * 10 );
+    SmartDashboard.putNumber( "Gyro", getHeading() );
+    //SmartDashboard.putNumber( "Gyro WPI", m_gyro.yawWPI() );
+    //SmartDashboard.putNumber( "Gyro Rate", m_gyro.getYawRate() );
+    SmartDashboard.putNumber( "Left Encoder", leftSlave.getSelectedSensorPosition() );
+    SmartDashboard.putNumber( "Right Encoder", -rightMaster.getSelectedSensorPosition() );
+    SmartDashboard.putNumber( "Left Velocity", leftSlave.getSelectedSensorVelocity() * 10 * ( 0.1524 * Math.PI ) / ( 2048 * highGearRatio )  );
+    SmartDashboard.putNumber( "Right Velocity", -rightMaster.getSelectedSensorVelocity() * 10 * ( 0.1524 * Math.PI ) / ( 2048 * highGearRatio )  );
 
     if( gear != prevGear ){
       /*
@@ -140,7 +145,7 @@ public class Drivetrain extends SubsystemBase {
    * @return The current wheel speeds.
    */
   public DifferentialDriveWheelSpeeds getWheelSpeeds() {
-    return new DifferentialDriveWheelSpeeds( leftMaster.getSelectedSensorVelocity()*10, rightMaster.getSelectedSensorVelocity()*10 );
+    return new DifferentialDriveWheelSpeeds( leftSlave.getSelectedSensorVelocity()*10*( 0.1524 * Math.PI ) / ( 2048 * highGearRatio ) , -rightMaster.getSelectedSensorVelocity()*10*( 0.1524 * Math.PI ) / ( 2048 * highGearRatio )  );
   }
 
   /**
@@ -183,7 +188,7 @@ public class Drivetrain extends SubsystemBase {
    * Resets the drive encoders to currently read a position of 0.
    */
   public void resetEncoders() {
-    leftMaster.setSelectedSensorPosition( 0 );
+    leftSlave.setSelectedSensorPosition( 0 );
     rightMaster.setSelectedSensorPosition( 0 );
   }
 
@@ -193,7 +198,7 @@ public class Drivetrain extends SubsystemBase {
    * @return the average of the two encoder readings
    */
   public double getAverageEncoderDistance() {
-    return ( leftMaster.getSelectedSensorPosition() + rightMaster.getSelectedSensorPosition() ) / 2;
+    return ( leftSlave.getSelectedSensorPosition() + -rightMaster.getSelectedSensorPosition() ) * ( 0.1524 * Math.PI ) / ( 2048 * highGearRatio * 2);
   }
 
 
@@ -214,6 +219,24 @@ public class Drivetrain extends SubsystemBase {
    */
   public WPI_TalonFX getRightMaster() {
     return rightMaster;
+  }
+
+  /**
+   * Gets the left drive master motor
+   *
+   * @return the left drive master motor
+   */
+  public WPI_TalonFX getLeftSlave() {
+    return leftSlave;
+  }
+
+  /**
+   * Gets the right drive master motor
+   *
+   * @return the right drive master motor
+   */
+  public WPI_TalonFX getRightSlave() {
+    return rightSlave;
   }
 
   /**
@@ -238,6 +261,7 @@ public class Drivetrain extends SubsystemBase {
    * @return the robot's heading in degrees, from -180 to 180
    */
   public double getHeading() {
+    
     return m_gyro.getRotation2d().getDegrees();
   }
   //Test
@@ -248,7 +272,7 @@ public class Drivetrain extends SubsystemBase {
    * @return The turn rate of the robot, in degrees per second
    */
   public double getTurnRate() {
-    return -m_gyro.getYawRate();
+    return m_gyro.getYawRate();
   }
 
   public void setGear( Gear g ){

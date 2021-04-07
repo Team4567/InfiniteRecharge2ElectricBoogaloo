@@ -161,6 +161,7 @@ public class TrajectoryCommand extends RamseteCommand {
 
   public SequentialCommandGroup get(){
     // Set the robot's "believed position (pose)" to be the starting position of the trajectory
+    drive.m_gyro.setYaw(0);
     drive.resetOdometry( t.getInitialPose() );
 
     // this refers to the object you are calling this from

@@ -27,10 +27,14 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.trajectory.constraint.TrajectoryConstraint;
+import edu.wpi.first.vision.VisionThread;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 import edu.wpi.cscore.CvSink;
@@ -71,16 +75,22 @@ public class RobotContainer {
   // Air Compressor
   public final Compressor compressor;
   
+  public VisionThread visionThread;
+  private Object imgLock = new Object();
+  public double centerX, area;
+
+
   // Until we find something to put here, make it null.
   private Command m_autoCommand = null;
+  
 
   // NetworkTables are a table of values that communicate between the laptop, robot, and other devices (Ex. Vision Camera)
   // Within the instance there are tables, and within the tables there are entries
   // The Limelight camera pre-defines its tables and entries
   // See https://docs.limelightvision.io/en/latest/getting_started.html#programming
   NetworkTableInstance inst = NetworkTableInstance.getDefault();
-  NetworkTable table, limelight;
-  public NetworkTableEntry tx, ty, targetVisible, kPAlign;
+  NetworkTable limelight, vision;
+  public NetworkTableEntry tx, ty, targetVisible, kPAlign, centerBall, maxA, centerA;
   
   // Constants for Limelight Calculations
   double angleLimelight = 0;
@@ -117,7 +127,7 @@ public class RobotContainer {
     
     // Initiate our drivetrain, defaulting to low gear
     drive = new Drivetrain();
-    drive.setGear(Drivetrain.Gear.LowGear);
+    drive.setGear(Drivetrain.Gear.HighGear);
     
     // Misc items, such as RGB Lights, PDP
     misc = new Misc();
@@ -133,7 +143,7 @@ public class RobotContainer {
     // Setup Compressor
     compressor = new Compressor( Constants.kCANPCMA );
     compressor.setClosedLoopControl( true );
-    compressor.start();
+    compressor.stop();
 
     // Define all Limelight NetworkTables Tables and Entries
     limelight = inst.getTable( "limelight" );
@@ -141,7 +151,11 @@ public class RobotContainer {
     ty = limelight.getEntry( "ty" );
     targetVisible = limelight.getEntry( "tv" );
 
-    table = inst.getTable("Table");
+    vision = inst.getTable( "Vision" );
+    centerBall = vision.getEntry( "Center Ball?");
+    centerA = vision.getEntry( "Center Ball A" );
+    maxA = vision.getEntry( "Max Ball A" );
+
 
 
     // Define chooser, followed by available options
@@ -158,6 +172,7 @@ public class RobotContainer {
     driveChoose.addOption("MattNorm", Driver.MattNorm );
     driveChoose.addOption("Paul", Driver.Paul );
     driveChoose.addOption("Music", Driver.Music );
+
     // None atm
     // chooser.addOption("Test", new SequentialCommandGroup( new TurnAngle( drive, 0
     // ), new DriveStraight( drive, 0 ) ) );
@@ -172,6 +187,7 @@ public class RobotContainer {
     );
 
     SmartDashboard.putData( "Select Driver", driveChoose );
+    SmartDashboard.putData( "Auto", chooser );
 
     SmartDashboard.putData("New Controls",
       new InstantCommand( 
@@ -186,21 +202,53 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings( Driver.Joe );
     new Thread(() -> {
+      
       UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
       camera.setResolution(640, 480);
+      
+      visionThread = new VisionThread( camera, new BallPipelineOpti(), pipeline -> {
+      boolean t_centerBall = false;
+      double t_maxA = -1;
+      double t_centerArea = -1;
+      ArrayList<MatOfPoint> outs = pipeline.filterContoursOutput();
+          if( !outs.isEmpty() ){
+            for( int i = 0; i < outs.size(); i++ ){
+              Rect r = Imgproc.boundingRect( pipeline.filterContoursOutput().get( i ) );
+              synchronized( imgLock ){
+                centerX = r.x + (r.width/2);
+                area = r.area();
+              }
+              if( area > t_maxA ){
+                t_maxA = area;
+              }
+              if( Math.abs( centerX - 320 ) < 20 ){
+                t_centerBall = true;
+                t_centerArea = area;
+              }
+            }
+            centerBall.setBoolean( t_centerBall );
+            maxA.setDouble( t_maxA );
+            centerA.setDouble( t_centerArea );
 
+          }
+          //output = pipeline.blurOutput();
+      });
+      Mat source = new Mat();
+      Mat output = new Mat();
+      visionThread.start();
       CvSink cvSink = CameraServer.getInstance().getVideo();
       CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 640, 480);
 
-      Mat source = new Mat();
-      Mat output = new Mat();
+      
 
       while(!Thread.interrupted()) {
         if (cvSink.grabFrame(source) == 0) {
           continue;
         }
+
         //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-        outputStream.putFrame(output);
+        
+        outputStream.putFrame( source );
       }
     }).start();
 
@@ -285,8 +333,9 @@ public class RobotContainer {
             , misc
           )
         );
-
+ 
         controller.bButton.whenPressed( new InstantCommand( shoot::toggle, shoot ) );
+           
     
         controller.yButton.whenPressed( ()->{
           stage++;
@@ -296,19 +345,19 @@ public class RobotContainer {
           switch( stage ){
             case 1:
               blink = 0.71;
-              shoot.setSetpoint(5000);
+              shoot.setSetpoint(86);
             break;
             case 2:
               blink = 0.67;
-              shoot.setSetpoint(5000);
+              shoot.setSetpoint(100);
             break;
             case 3:
               blink = 0.85;
-              shoot.setSetpoint(5000);
+              shoot.setSetpoint(120);
             break;
             case 4:
               blink = 0.61;
-              shoot.setSetpoint(5000);
+              shoot.setSetpoint(160);
             break;
           }
         });
@@ -336,11 +385,21 @@ public class RobotContainer {
             break;
           }
         });
+        controller.xButton.whenPressed( ()->{
+          if( compressor.enabled() ){
+            compressor.stop();
+          }else{
+            compressor.start();
+          }
+        });
 
-        controller.dPadUp.whileHeld( new TrajectoryCommand( 
+        controller.dPadUp.whenHeld( new TrajectoryCommand( 
           new Pose2d( 0, 0, new Rotation2d( 0 ) ), 
-          List.of( ), 
-          new Pose2d( 0, 0, new Rotation2d( tx.getDouble(0) ) ),  false, drive ) 
+          List.of(
+            new Translation2d( 1, 1 )
+           ), 
+          new Pose2d( 2, 2, new Rotation2d( tx.getDouble(0) ) ),  false, drive ) 
+          , true
         );
 
       break;
@@ -457,6 +516,7 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
+  /*
   public Command getAutonomousCommand() {
     // Grab If we want to run this in reverse from the Shuffleboard, default to false
     reverseAuto = SmartDashboard.getBoolean( "Reverse", false );
@@ -518,7 +578,7 @@ public class RobotContainer {
     );
 
     // Reset odometry to the starting pose of the trajectory.
-    drive.resetOdometry( exampleTrajectory.getInitialPose() );
+    //drive.resetOdometry( exampleTrajectory.getInitialPose() );
 
     // Run path following command, then stop at the end.
     //return ramseteCommand.andThen( () -> drive.tankDriveVolts( 0, 0 ) ) bn ;
@@ -623,5 +683,64 @@ public class RobotContainer {
       drive
     ).get();
     
+  }*/
+  public Command getAutonomousCommand() {
+
+    // Create a voltage constraint to ensure we don't accelerate too fast
+    var autoVoltageConstraint =
+        new DifferentialDriveVoltageConstraint(
+            new SimpleMotorFeedforward( Constants.ksDrive,
+                                        Constants.kvDrive,
+                                        Constants.kaDrive),
+            Constants.kDriveKinematics,
+            10);
+
+    // Create config for trajectory
+    TrajectoryConfig config =
+        new TrajectoryConfig(Constants.kMaxSpeedMetersPerSecond,
+                             Constants.kMaxAccelerationMetersPerSecondSquared)
+            // Add kinematics to ensure max speed is actually obeyed
+            .setKinematics(Constants.kDriveKinematics)
+            // Apply the voltage constraint
+            .addConstraint(autoVoltageConstraint);
+
+    // An example trajectory to follow.  All units in meters.
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+        // Start at the origin facing the +X direction
+        new Pose2d(0, 0, new Rotation2d(0)),
+        // Pass through these two interior waypoints, making an 's' curve path
+        List.of(
+            new Translation2d(1, 1),
+            new Translation2d(2, -1)
+        ),
+        // End 3 meters straight ahead of where we started, facing forward
+        new Pose2d(3, 0, new Rotation2d(0)),
+        // Pass config
+        config
+    );
+
+    RamseteCommand ramseteCommand = new RamseteCommand(
+        exampleTrajectory,
+        drive::getPose,
+        new RamseteController(Constants.kRamseteB, Constants.kRamseteZeta),
+        new SimpleMotorFeedforward(Constants.ksDrive,
+                                   Constants.kvDrive,
+                                   Constants.kaDrive),
+        Constants.kDriveKinematics,
+        drive::getWheelSpeeds,
+        new PIDController(Constants.kPDrive, 0, 0),
+        new PIDController(Constants.kPDrive, 0, 0),
+        // RamseteCommand passes volts to the callback
+        drive::tankDriveVolts,
+        drive
+    );
+
+    // Reset odometry to the starting pose of the trajectory.
+    //drive.m_gyro.setYaw(0);
+    drive.resetOdometry(exampleTrajectory.getInitialPose());
+
+    // Run path following command, then stop at the end.
+    return ramseteCommand.andThen(() -> drive.tankDriveVolts(0, 0));
   }
 }
+

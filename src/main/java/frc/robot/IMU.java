@@ -13,6 +13,7 @@ public class IMU extends PigeonIMU implements Sendable  {
     // Connects this class to its parent PigeonIMU class
     // See video if confused
     // 
+    boolean isNegative = false;
     public IMU(int port) {
         super(port);
     }
@@ -37,9 +38,22 @@ public class IMU extends PigeonIMU implements Sendable  {
         return yawCont() % 360;
     }
 
+    public double yawWPI(){
+        double y = yaw();
+        if( y > 180 ){
+            isNegative = true;
+            return -( 360 - y );
+            
+        }else if( y < 180 ){
+            isNegative = false;
+            return y;
+        }
+        return 180 * ( isNegative ? -1 : 1 );
+    }
+
     // Converts the gyro value to a Rotation2d class, used for trajectories
     public Rotation2d getRotation2d(){
-        return new Rotation2d( Math.toRadians( yaw() ) );
+        return Rotation2d.fromDegrees( yawCont() );
     }
 
     // Reset the gyro value to 0
@@ -51,7 +65,7 @@ public class IMU extends PigeonIMU implements Sendable  {
     public double getYawRate(){
         double[] ypr = {0,0,0};
         getRawGyro(ypr);
-        return ypr[0];
+        return ypr[2];
     }
 
     /** Code to send gyro to Shuffleboard Widget 
